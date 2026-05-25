@@ -101,5 +101,5 @@ if __name__ == "__main__":
     for n_rows, n_cols in [(128, 256), (512, 512), (1024, 1024), (2048, 2048)]:
         x = torch.randn(n_rows, n_cols, device="cuda")
         bench(f"triton  (shape={n_rows}x{n_cols})", softmax, x)
-        bench(f"torch   (shape={n_rows}x{n_cols})", F.softmax, x, dim=-1)
+        bench(f"torch   (shape={n_rows}x{n_cols})", lambda t: F.softmax(t, dim=-1), x)
         print()
