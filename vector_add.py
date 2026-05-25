@@ -28,6 +28,21 @@ def add(x: torch.Tensor, y: torch.Tensor):
     return output
 
 
+def bench_fn(label, fn, *args, warmup=10, rep=100):
+    for _ in range(warmup):
+        fn(*args)
+    torch.cuda.synchronize()
+    start = torch.cuda.Event(enable_timing=True)
+    end = torch.cuda.Event(enable_timing=True)
+    start.record()
+    for _ in range(rep):
+        fn(*args)
+    end.record()
+    torch.cuda.synchronize()
+    elapsed_ms = start.elapsed_time(end) / rep
+    print(f"{label}: {elapsed_ms:.3f} ms")
+
+
 if __name__ == "__main__":
     size = 100000
     x = torch.randn(size, device="cuda")
@@ -35,4 +50,11 @@ if __name__ == "__main__":
     output = add(x, y)
     torch.testing.assert_close(output, x + y)
     print("vector_add passed!")
+
+    for size in [10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
+        x = torch.randn(size, device="cuda")
+        y = torch.randn(size, device="cuda")
+        bench_fn(f"triton  (N={size:>12})", add, x, y)
+        bench_fn(f"torch   (N={size:>12})", torch.add, x, y)
+        print()
 
