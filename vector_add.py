@@ -23,10 +23,8 @@ def add_kernel(x_ptr,
 def add(x: torch.Tensor, y: torch.Tensor):
     output = torch.empty_like(x)
     n_elements = x.numel()
-    # 小数据量用一个 block 减少启动开销
-    BLOCK_SIZE = min(4096, triton.next_power_of_2(n_elements))
-    grid = (triton.cdiv(n_elements, BLOCK_SIZE),)
-    add_kernel[grid](x, y, output, n_elements, BLOCK_SIZE=BLOCK_SIZE)
+    grid = lambda meta: (triton.cdiv(n_elements, meta['BLOCK_SIZE']),)
+    add_kernel[grid](x, y, output, n_elements, BLOCK_SIZE=4096)
     return output
 
 
