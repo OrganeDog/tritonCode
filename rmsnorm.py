@@ -114,11 +114,16 @@ if __name__ == "__main__":
     print("rmsnorm 正确性验证通过！\n")
 
     # ── 性能对比 ─────────────────────────────────────────────────────────────
+    torch_compile_fn = torch.compile(
+        lambda a, b, e: (a / torch.sqrt(torch.mean(a ** 2, dim=-1, keepdim=True) + e)) * b
+    )
     for n_rows, n_cols in [(128, 256), (512, 512), (1024, 1024), (2048, 2048), (4096, 4096), (8192, 8192)]:
         x = torch.randn(n_rows, n_cols, device="cuda")
         w = torch.ones(n_cols, device="cuda")
-        bench(f"triton  (shape={n_rows}x{n_cols})", rmsnorm, x, w, eps)
-        bench(f"torch   (shape={n_rows}x{n_cols})",
+        bench(f"triton          (shape={n_rows}x{n_cols})", rmsnorm, x, w, eps)
+        bench(f"torch eager     (shape={n_rows}x{n_cols})",
               lambda a, b, e: (a / torch.sqrt(torch.mean(a ** 2, dim=-1, keepdim=True) + e)) * b,
               x, w, eps)
+        bench(f"torch.compile   (shape={n_rows}x{n_cols})",
+              torch_compile_fn, x, w, eps)
         print()

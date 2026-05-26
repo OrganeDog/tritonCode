@@ -119,12 +119,17 @@ if __name__ == "__main__":
     print("layernorm 正确性验证通过！\n")
 
     # ── 性能对比 ─────────────────────────────────────────────────────────────
+    torch_compile_fn = torch.compile(
+        lambda a, ww, bb, e: F.layer_norm(a, (a.shape[-1],), weight=ww, bias=bb, eps=e)
+    )
     for n_rows, n_cols in [(128, 256), (512, 512), (1024, 1024), (2048, 2048), (4096, 4096), (8192, 8192)]:
         x = torch.randn(n_rows, n_cols, device="cuda")
         w = torch.ones(n_cols, device="cuda")
         b = torch.zeros(n_cols, device="cuda")
-        bench(f"triton  (shape={n_rows}x{n_cols})", layernorm, x, w, b, eps)
-        bench(f"torch   (shape={n_rows}x{n_cols})",
+        bench(f"triton          (shape={n_rows}x{n_cols})", layernorm, x, w, b, eps)
+        bench(f"torch eager     (shape={n_rows}x{n_cols})",
               lambda a, ww, bb, e: F.layer_norm(a, (a.shape[-1],), weight=ww, bias=bb, eps=e),
               x, w, b, eps)
+        bench(f"torch.compile   (shape={n_rows}x{n_cols})",
+              torch_compile_fn, x, w, b, eps)
         print()

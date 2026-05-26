@@ -75,9 +75,11 @@ if __name__ == "__main__":
     print("add_relu 正确性验证通过！\n")
 
     # ── 性能对比：融合算子 vs PyTorch 分步调用 ────────────────────────────────
+    torch_compile_fn = torch.compile(lambda a, b: F.relu(a + b))
     for size in [10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
         x = torch.randn(size, device="cuda")
         y = torch.randn(size, device="cuda")
-        bench(f"triton fused (N={size:>12})", add_relu, x, y)
-        bench(f"torch add+relu (N={size:>12})", lambda a, b: F.relu(a + b), x, y)
+        bench(f"triton fused    (N={size:>12})", add_relu, x, y)
+        bench(f"torch eager     (N={size:>12})", lambda a, b: F.relu(a + b), x, y)
+        bench(f"torch.compile   (N={size:>12})", torch_compile_fn, x, y)
         print()

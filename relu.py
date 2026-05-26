@@ -74,8 +74,10 @@ if __name__ == "__main__":
     print("relu 正确性验证通过！\n")
 
     # ── 性能对比 ─────────────────────────────────────────────────────────────
+    torch_compile_fn = torch.compile(lambda t: F.relu(t))
     for size in [10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
         x = torch.randn(size, device="cuda")
-        bench(f"triton  (N={size:>12})", relu, x)
-        bench(f"torch   (N={size:>12})", F.relu, x)
+        bench(f"triton          (N={size:>12})", relu, x)
+        bench(f"torch eager     (N={size:>12})", F.relu, x)
+        bench(f"torch.compile   (N={size:>12})", torch_compile_fn, x)
         print()

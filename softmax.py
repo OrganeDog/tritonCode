@@ -104,8 +104,10 @@ if __name__ == "__main__":
     print("softmax 正确性验证通过！\n")
 
     # ── 性能对比 ─────────────────────────────────────────────────────────────
+    torch_compile_fn = torch.compile(lambda t: F.softmax(t, dim=-1))
     for n_rows, n_cols in [(128, 256), (512, 512), (1024, 1024), (2048, 2048), (4096, 4096), (8192, 8192)]:
         x = torch.randn(n_rows, n_cols, device="cuda")
-        bench(f"triton  (shape={n_rows}x{n_cols})", softmax, x)
-        bench(f"torch   (shape={n_rows}x{n_cols})", lambda t: F.softmax(t, dim=-1), x)
+        bench(f"triton          (shape={n_rows}x{n_cols})", softmax, x)
+        bench(f"torch eager     (shape={n_rows}x{n_cols})", lambda t: F.softmax(t, dim=-1), x)
+        bench(f"torch.compile   (shape={n_rows}x{n_cols})", torch_compile_fn, x)
         print()

@@ -51,10 +51,12 @@ if __name__ == "__main__":
     torch.testing.assert_close(output, x + y)
     print("vector_add passed!")
 
+    torch_compile_fn = torch.compile(torch.add)
     for size in [10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
         x = torch.randn(size, device="cuda")
         y = torch.randn(size, device="cuda")
-        bench_fn(f"triton  (N={size:>12})", add, x, y)
-        bench_fn(f"torch   (N={size:>12})", torch.add, x, y)
+        bench_fn(f"triton          (N={size:>12})", add, x, y)
+        bench_fn(f"torch eager     (N={size:>12})", torch.add, x, y)
+        bench_fn(f"torch.compile   (N={size:>12})", torch_compile_fn, x, y)
         print()
 
