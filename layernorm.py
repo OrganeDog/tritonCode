@@ -53,11 +53,11 @@ def layernorm_kernel(
     mean = tl.sum(x, axis=0) / n_cols
 
     # ── 第二步：计算方差 ───────────────────────────────────────────
-    x_centered = x - mean
+    x_centered = tl.where(mask, x - mean, 0.0)
     var = tl.sum(x_centered * x_centered, axis=0) / n_cols
 
     # ── 第三步：标准化 + 缩放 + 偏置 ───────────────────────────────
-    output = x_centered * tl.rsqrt(var + eps) * w + b
+    output = tl.where(mask, x_centered * tl.rsqrt(var + eps) * w + b, 0.0)
 
     # ── 写回 ──────────────────────────────────────────────────────
     tl.store(out_row_start_ptr + col_offsets, output, mask=mask)
