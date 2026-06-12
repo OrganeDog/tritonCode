@@ -26,7 +26,7 @@ def rmsnorm_kernel(
     stride_row,
     n_cols,
     eps,
-    BLOCK_SIZE: tl.constexpr,
+    BLOCK_SIZE: tl.constexpr,#一个block 的 thread数量
 ):
     """
     逐行 RMSNorm：y = x / sqrt(mean(x²) + eps) * w
